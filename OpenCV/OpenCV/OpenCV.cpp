@@ -118,14 +118,9 @@ int _tmain()
 {
 	namedWindow("Camera_Output", 1);    //Create window
 	VideoCapture capture(-1);  //Capture using any camera connected to your system
-	while (1){ //Create infinte loop for live streaming
-		Mat img;
-		capture >> img; //Create image frames from capture
+	Mat img;
+	while (capture.read(img)){ //Create infinte loop for live streaming
 		imshow("Camera_Output", img);   //Show image frames on created window
-		char key = cvWaitKey(10);     //Capture Keyboard stroke
-		if (char(key) == 27){
-			break;      //If you hit ESC key loop will break.
-		}
 	}
 	capture.release();
 	/*
