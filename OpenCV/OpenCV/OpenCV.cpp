@@ -15,6 +15,12 @@ Scalar MAX_BLUE = Scalar(180, 80, 80);
 Scalar MIN_RED = Scalar(0, 0, 70);
 Scalar MAX_RED = Scalar(80, 80, 180);
 
+Scalar MIN_YELLOW = Scalar(100, 150, 150);
+Scalar MAX_YELLOW = Scalar(150, 200, 200);
+
+Scalar MIN_BLACK = Scalar(0, 0, 0);
+Scalar MAX_BLACK = Scalar(50, 50, 50);
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -37,6 +43,13 @@ Rect getLargestRect(Mat& src, Scalar min, Scalar max)
 	int maxSize = -1;
 	for (int j = 0; j < contours.size(); j++)
 	{
+		vector<Point> contour = contours[j];
+		vector<Point> approx;
+		approxPolyDP(Mat(contour), approx, arcLength(Mat(contour), true)*0.02, true);
+		if (approx.size() < 3 || approx.size() > 10)
+		{
+			continue;
+		}
 		int area = contourArea(contours[j]);
 		if (area > maxSize)
 		{
@@ -45,6 +58,18 @@ Rect getLargestRect(Mat& src, Scalar min, Scalar max)
 		}
 	}
 	return boundingRect(largestContour);
+}
+
+int getCollision(Mat& src)
+{
+	Rect red, blue;
+	red = getLargestRect(src, MIN_RED, MAX_RED);
+	blue = getLargestRect(src, MIN_BLUE, MAX_BLUE);
+	Rect intersect = red & blue;
+	rectangle(src, Point(red.x, red.y), Point(red.x + red.width, red.y + red.height), Scalar(0, 0, 255), 5);
+	rectangle(src, Point(blue.x, blue.y), Point(blue.x + blue.width, blue.y + blue.height), Scalar(255, 0, 0), 5);
+	rectangle(src, Point(intersect.x, intersect.y), Point(intersect.x + intersect.width, intersect.y + intersect.height), Scalar(0, 255, 0), 5);
+	return intersect.area();
 }
 
 SOCKET setupServer()
@@ -105,54 +130,53 @@ SOCKET setupServer()
 	return ListenSocket;
 }
 
-int getCollision(Mat& src)
-{
-	Rect red, blue;
-	red = getLargestRect(src, MIN_RED, MAX_RED);
-	blue = getLargestRect(src, MIN_BLUE, MAX_BLUE);
-	Rect intersect = red & blue;
-	return intersect.area();
-}
-
 int _tmain()
 {
-	namedWindow("Camera_Output", 1);    //Create window
-	VideoCapture capture(-1);  //Capture using any camera connected to your system
+	namedWindow("Camera_Output", 0);    //Create window
+	VideoCapture capture(0);  //Capture using any camera connected to your system
 	Mat img;
 	while (capture.read(img)){ //Create infinte loop for live streaming
+
+		int hit = getCollision(img);
+		cout << hit;
+		if (hit > 10000)
+			cout << "\thit!" << endl;
+		else
+			cout << "\tmiss!" << endl;
 		imshow("Camera_Output", img);   //Show image frames on created window
+		waitKey(50);
 	}
 	capture.release();
 	/*
 	SOCKET ListenSocket = setupServer();
 	while (true){
-		// Accept a client socket
-		SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
-		if (ClientSocket == INVALID_SOCKET)
-		{
-			printf("accept failed with error: %d\n", WSAGetLastError());
-			closesocket(ListenSocket);
-			WSACleanup();
-			return 1;
-		}
-		int iSendResult = send(ClientSocket, "hi", 2, 0);
-		if (iSendResult == SOCKET_ERROR)
-		{
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
-		printf("Bytes sent: %d\n", iSendResult);
-		// shutdown the connection since we're done
-		int iResult = shutdown(ClientSocket, SD_SEND);
-		if (iResult == SOCKET_ERROR)
-		{
-			printf("shutdown failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
+	// Accept a client socket
+	SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
+	if (ClientSocket == INVALID_SOCKET)
+	{
+	printf("accept failed with error: %d\n", WSAGetLastError());
+	closesocket(ListenSocket);
+	WSACleanup();
+	return 1;
+	}
+	int iSendResult = send(ClientSocket, "hi", 2, 0);
+	if (iSendResult == SOCKET_ERROR)
+	{
+	printf("send failed with error: %d\n", WSAGetLastError());
+	closesocket(ClientSocket);
+	WSACleanup();
+	return 1;
+	}
+	printf("Bytes sent: %d\n", iSendResult);
+	// shutdown the connection since we're done
+	int iResult = shutdown(ClientSocket, SD_SEND);
+	if (iResult == SOCKET_ERROR)
+	{
+	printf("shutdown failed with error: %d\n", WSAGetLastError());
+	closesocket(ClientSocket);
+	WSACleanup();
+	return 1;
+	}
 	}
 	*/
 	/*
