@@ -13,7 +13,6 @@ Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ
 #define WLAN_PASS "redmond2015"
 #define WLAN_SECURITY WLAN_SEC_WPA2
 
-
 void setup() {
   Serial.begin(115200);
   Serial.println(F("\nInitialising the CC3000 ..."));
